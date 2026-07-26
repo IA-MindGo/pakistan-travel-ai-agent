@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
+from pathlib import Path
 from typing import Any, Mapping
 
 import httpx
@@ -17,6 +18,59 @@ SESSION_COOKIE_NAME = "chatkit_session_id"
 SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30  # 30 days
 
 app = FastAPI(title="Managed ChatKit Session API")
+
+
+def load_environment_from_path(path: str | os.PathLike[str] | None = None) -> bool:
+    """Populate environment variables from .env files in the managed ChatKit project."""
+    candidates = []
+    if path is not None:
+        candidates.append(Path(path))
+
+    base_dir = Path(__file__).resolve().parents[1]
+    candidates.extend(
+        [
+            base_dir / ".env.local",
+            base_dir / ".env",
+            base_dir.parent / ".env.local",
+            base_dir.parent / ".env",
+        ]
+    )
+
+    loaded = False
+    seen: set[Path] = set()
+    for candidate in candidates:
+        path_obj = Path(candidate)
+        if path_obj in seen:
+            continue
+        seen.add(path_obj)
+
+        if not path_obj.exists():
+            continue
+
+        for line in path_obj.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if stripped.startswith("export "):
+                stripped = stripped[len("export ") :].strip()
+            if "=" not in stripped:
+                continue
+
+            key, value = stripped.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+            if not key:
+                continue
+            if value and value[0] == value[-1] and value[0] in {'"', "'"}:
+                value = value[1:-1]
+
+            os.environ.setdefault(key, value)
+            loaded = True
+
+    return loaded
+
+
+load_environment_from_path()
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,7 +123,13 @@ async def create_session(request: Request) -> JSONResponse:
     if not upstream.is_success:
         message = None
         if isinstance(payload, Mapping):
-            message = payload.get("error")
+            error_payload = payload.get("error")
+            if isinstance(error_payload, Mapping):
+                message = error_payload.get("message") or error_payload.get("type")
+            elif isinstance(error_payload, str):
+                message = error_payload
+            else:
+                message = payload.get("detail") or payload.get("message")
         message = message or upstream.reason_phrase or "Failed to create session"
         return respond({"error": message}, upstream.status_code, cookie_value)
 

@@ -6,7 +6,7 @@
     "frontend": "npm --prefix frontend install && npm --prefix frontend run dev",
     "frontend:build": "npm --prefix frontend install && npm --prefix frontend run build",
     "frontend:lint": "npm --prefix frontend install && npm --prefix frontend run lint",
-    "backend": "./backend/scripts/run.sh"
+    "backend": "cd backend && .venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
