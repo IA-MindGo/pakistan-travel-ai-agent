@@ -1,0 +1,4 @@
+# Root fallback for Render builds that run at repository root.
+# Keeps dependency install aligned with backend service requirement files.
+-r chatkit/backend/requirements.txt
+-r managed-chatkit/backend/requirements.txt
