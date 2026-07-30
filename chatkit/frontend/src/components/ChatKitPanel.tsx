@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
 
@@ -16,7 +16,7 @@ export function ChatKitPanel() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const sendMessage = async (event?: React.FormEvent) => {
+  const sendMessage = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
@@ -41,7 +41,7 @@ export function ChatKitPanel() {
       const data = (await response.json()) as { reply?: string };
       const assistantMessage: Message = { role: "assistant", content: data.reply ?? "I’m here and ready to help." };
       setMessages([...history, assistantMessage]);
-    } catch (error) {
+    } catch {
       setMessages([
         ...history,
         {
@@ -101,7 +101,12 @@ export function ChatKitPanel() {
         )}
       </div>
 
-      <form onSubmit={sendMessage} className="flex items-center gap-2 border-t border-white/70 bg-white/80 p-3">
+      <form
+        onSubmit={(event) => {
+          void sendMessage(event);
+        }}
+        className="flex items-center gap-2 border-t border-white/70 bg-white/80 p-3"
+      >
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}
