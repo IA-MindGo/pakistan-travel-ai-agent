@@ -2,7 +2,8 @@ import * as path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
-const backendTarget = process.env.CHATKIT_API_BASE ?? "http://127.0.0.1:8000";
+const backendTarget =
+  process.env.CHATKIT_API_BASE ?? "https://pakistan-travel-ai-agent.onrender.com";
 
 export default defineConfig({
   // Allow env files to live one level above the frontend directory
