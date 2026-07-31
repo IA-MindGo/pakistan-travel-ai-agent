@@ -15,7 +15,7 @@ const BACKEND_URL =
 
 export function createClientSecretFetcher(
   workflow: string,
-  endpoint = `${BACKEND_URL}/chatkit`
+  endpoint = `${BACKEND_URL}/api/create-session`
 ) {
   return async (currentSecret: string | null) => {
     if (currentSecret) return currentSecret;
