@@ -4,6 +4,16 @@ import { Bot, Send, Sparkles } from "lucide-react";
 
 type Message = { role: "user" | "assistant"; content: string };
 
+const readEnvString = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+
+const BACKEND_BASE_URL = readEnvString(import.meta.env.VITE_BACKEND_URL);
+const CHAT_ENDPOINT = BACKEND_BASE_URL
+  ? `${BACKEND_BASE_URL.replace(/\/$/, "")}/api/chat`
+  : "/api/chat";
+
 const starterMessages: Message[] = [
   {
     role: "assistant",
@@ -28,7 +38,7 @@ export function ChatKitPanel() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch(CHAT_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, history: history.map(({ role, content }) => ({ role, content })) }),

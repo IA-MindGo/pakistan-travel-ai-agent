@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 import httpx
+from openai import AsyncOpenAI
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -71,6 +72,7 @@ def load_environment_from_path(path: str | os.PathLike[str] | None = None) -> bo
 
 
 load_environment_from_path()
+openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -151,6 +153,49 @@ async def create_session(request: Request) -> JSONResponse:
         200,
         cookie_value,
     )
+
+
+@app.post("/api/chat")
+async def chat_reply(request: Request) -> JSONResponse:
+    """Simple JSON chat endpoint for custom frontends."""
+    if not os.getenv("OPENAI_API_KEY"):
+        return respond({"error": "Missing OPENAI_API_KEY environment variable"}, 500)
+
+    body = await read_json_body(request)
+    message = body.get("message") if isinstance(body, Mapping) else None
+    if not isinstance(message, str) or not message.strip():
+        return respond({"error": "Missing message"}, 400)
+
+    history = body.get("history") if isinstance(body, Mapping) else None
+    prompt_parts: list[str] = [
+        "You are Pakistan Travel AI, a practical and friendly Pakistan travel planner.",
+        "Give concise and useful answers with specific destinations, travel tips, and budget-aware suggestions when relevant.",
+    ]
+
+    if isinstance(history, list):
+        for item in history[-10:]:
+            if not isinstance(item, Mapping):
+                continue
+            role = item.get("role")
+            content = item.get("content")
+            if isinstance(role, str) and isinstance(content, str) and content.strip():
+                prompt_parts.append(f"{role}: {content.strip()}")
+    else:
+        prompt_parts.append(f"user: {message.strip()}")
+
+    try:
+        completion = await openai_client.responses.create(
+            model="gpt-4.1-mini",
+            input="\n".join(prompt_parts),
+        )
+    except Exception as error:
+        return respond({"error": f"OpenAI request failed: {error}"}, 502)
+
+    reply = getattr(completion, "output_text", None)
+    if not isinstance(reply, str) or not reply.strip():
+        return respond({"error": "Model returned an empty response"}, 502)
+
+    return respond({"reply": reply.strip()}, 200)
 
 
 def respond(
