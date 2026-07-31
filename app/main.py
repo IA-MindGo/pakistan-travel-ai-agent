@@ -1,8 +1,8 @@
 """Root ASGI entrypoint for Render deployments from repository root.
 
 This shim allows `uvicorn app.main:app` to work when the service root is the
-repository root. By default it serves `chatkit/backend/app/main.py`.
-Set `BACKEND_TARGET=managed` to serve `managed-chatkit/backend/app/main.py`.
+repository root. By default it serves `managed-chatkit/backend/app/main.py`.
+Set `BACKEND_TARGET=chatkit` to serve `chatkit/backend/app/main.py`.
 You can override both with `BACKEND_APP_DIR`.
 """
 
@@ -23,7 +23,7 @@ def _resolve_backend_dir() -> Path:
         override_path = Path(override)
         return override_path if override_path.is_absolute() else ROOT_DIR / override_path
 
-    target = (os.getenv("BACKEND_TARGET") or "chatkit").strip().lower()
+    target = (os.getenv("BACKEND_TARGET") or "managed").strip().lower()
     if target in {"managed", "managed-chatkit", "managed_chatkit"}:
         return ROOT_DIR / "managed-chatkit" / "backend"
     return ROOT_DIR / "chatkit" / "backend"
