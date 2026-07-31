@@ -10,7 +10,7 @@ export const workflowId = (() => {
 })();
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL ??
+  readEnvString(import.meta.env.VITE_BACKEND_URL) ??
   "https://pakistan-travel-ai-agent.onrender.com";
 
 export function createClientSecretFetcher(
