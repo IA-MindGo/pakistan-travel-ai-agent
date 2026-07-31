@@ -9,9 +9,11 @@ export const workflowId = (() => {
   return id;
 })();
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
+
 export function createClientSecretFetcher(
   workflow: string,
-  endpoint = "/api/create-session"
+  endpoint = `${BACKEND_URL}/chatkit`
 ) {
   return async (currentSecret: string | null) => {
     if (currentSecret) return currentSecret;
